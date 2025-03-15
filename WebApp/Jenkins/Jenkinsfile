@@ -1,0 +1,98 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_REGISTRY = "your-docker-registry"
+        K8S_NAMESPACE = "mern-microservices"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                script {
+                    checkout scm
+                }
+            }
+        }
+
+        stage('Build and Push Docker Images') {
+            parallel {
+                stage('Build Frontend') {
+                    steps {
+                        script {
+                            dir('frontend') {
+                                sh 'docker build -t $DOCKER_REGISTRY/<image-name>:latest .'
+                                sh 'docker push $DOCKER_REGISTRY/<image-name>:latest'
+                            }
+                        }
+                    }
+                }
+
+                stage('Build Hello Service') {
+                    steps {
+                        script {
+                            dir('backend/helloService') {
+                                sh 'docker build -t $DOCKER_REGISTRY/<image-name>:latest .'
+                                sh 'docker push $DOCKER_REGISTRY/<image-name>:latest'
+                            }
+                        }
+                    }
+                }
+
+                stage('Build Profile Service') {
+                    steps {
+                        script {
+                            dir('backend/profileService') {
+                                sh 'docker build -t $DOCKER_REGISTRY/<image-name>:latest .'
+                                sh 'docker push $DOCKER_REGISTRY/<image-name>:latest'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            parallel {
+                stage('Deploy Frontend') {
+                    steps {
+                        script {
+                            dir('helm/frontend') {
+                                sh 'helm upgrade --install frontend . --namespace $K8S_NAMESPACE'
+                            }
+                        }
+                    }
+                }
+
+                stage('Deploy Hello Service') {
+                    steps {
+                        script {
+                            dir('helm/helloService') {
+                                sh 'helm upgrade --install hello-service . --namespace $K8S_NAMESPACE'
+                            }
+                        }
+                    }
+                }
+
+                stage('Deploy Profile Service') {
+                    steps {
+                        script {
+                            dir('helm/profileService') {
+                                sh 'helm upgrade --install profile-service . --namespace $K8S_NAMESPACE'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Deployment Successful!"
+        }
+        failure {
+            echo "❌ Deployment Failed!"
+        }
+    }
+}

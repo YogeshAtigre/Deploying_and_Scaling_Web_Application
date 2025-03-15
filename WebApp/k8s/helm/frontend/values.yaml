@@ -1,0 +1,10 @@
+replicaCount: 2
+image:
+  repository: <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/<imageorepo-name>
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 3000

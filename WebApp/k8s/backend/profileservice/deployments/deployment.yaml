@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profile-service-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: profile-service
+  template:
+    metadata:
+      labels:
+        app: profile-service
+    spec:
+      containers:
+        - name: profile-service
+          image: <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/<image-name>:latest
+          ports:
+            - containerPort: 3002
